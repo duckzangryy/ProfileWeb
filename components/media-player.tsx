@@ -15,7 +15,7 @@ interface Track {
 }
 
 // Default SoundCloud URL - user can modify this
-const SOUNDCLOUD_URL = "https://soundcloud.com/bfmaterial-maybe"
+const SOUNDCLOUD_URL = "https://soundcloud.com/bfmaterial-maybe/sets/awsc"
 
 const MediaPlayer = memo(() => {
   const [playlist, setPlaylist] = useState<Track[]>([])
