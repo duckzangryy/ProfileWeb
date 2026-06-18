@@ -2,43 +2,25 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react'
 import Image from "next/image"
 import { 
-  Play, Pause, SkipBack, SkipForward, Repeat, Shuffle
+  Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, AlertCircle, Loader2
 } from "lucide-react"
 
-const playlist = [
-  { 
-    title: "Tuyệt Tình Ca ", 
-    artist: "Lã Phong Lâm", 
-    cover: "/artworks-R45YFyvPI2wxXPkP-PUX69g-t500x500.jpg",
-    audioUrl: "/TuyetTinhCa.mp3"
-  },
-  { 
-    title: "Em Đau Rồi Đấy", 
-    artist: "Dương Yến Phi", 
-    cover: "/artworks-W3QPrHejdf5xxyUn-C5HjGw-t500x500.jpg",
-    audioUrl: "/EmDauRoiDay.mp3"
-  },
-  { 
-    title: "Chân Tình", 
-    artist: "Vân Trường", 
-    cover: "/artworks-xfUvU2QmwI7o27Gk-RQgr5A-t500x500.jpg",
-    audioUrl: "/ChanTinh.mp3"
-  },
-  { 
-    title: "Ngưng Làm Bạn", 
-    artist: "TINO, Hoàng Yến Chibi", 
-    cover: "/artworks-8JJH3iXv3xBIE9Ih-vjWrkg-t500x500.jpg",
-    audioUrl: "/NgungLamBan.mp3"
-  },
-  { 
-    title: "Dấu Yêu", 
-    artist: "Mỹ Tâm", 
-    cover: "/artworks-lH7QiVsN8ZGKs3rm-sx4opA-t500x500.jpg",
-    audioUrl: "/DauYeu.mp3"
-  },
-]
+interface Track {
+  id: string;
+  title: string;
+  artist: string;
+  cover: string;
+  audioUrl: string;
+  duration?: number;
+}
+
+// Default SoundCloud URL - user can modify this
+const SOUNDCLOUD_URL = "https://soundcloud.com/bfmaterial-maybe"
 
 const MediaPlayer = memo(() => {
+  const [playlist, setPlaylist] = useState<Track[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTrack, setCurrentTrack] = useState(0)
   const [progress, setProgress] = useState(0)
@@ -56,11 +38,38 @@ const MediaPlayer = memo(() => {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Fetch SoundCloud tracks on component mount
+  useEffect(() => {
+    const fetchPlaylist = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await fetch(`/api/soundcloud?url=${encodeURIComponent(SOUNDCLOUD_URL)}`)
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch SoundCloud tracks')
+        }
+
+        const data = await response.json()
+        setPlaylist(data.tracks || [])
+        setCurrentTrack(0)
+      } catch (err) {
+        console.error('Failed to fetch playlist:', err)
+        setError((err as Error).message || 'Failed to load playlist')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPlaylist()
+  }, [])
+
 useEffect(() => {
     if (typeof window === "undefined") return;
     const audio = new Audio();
     audio.volume = 1
     audio.preload = "none" // Defer loading
+    audio.crossOrigin = "anonymous"
     audioRef.current = audio
 
     const handleTimeUpdate = () => {
@@ -85,38 +94,45 @@ useEffect(() => {
       }
     }
 
+    const handleError = () => {
+      console.error("Audio playback error")
+      setIsPlaying(false)
+    }
+
     audio.addEventListener('timeupdate', handleTimeUpdate)
     audio.addEventListener('loadedmetadata', handleLoadedMetadata)
     audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('error', handleError)
 
     return () => {
       audio.pause()
       audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
       audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('error', handleError)
     }
   }, [isRepeat])
 
   useEffect(() => {
-    if (audioRef.current) {
-      const audio = audioRef.current
-      const wasPlaying = isPlaying
+    if (!playlist.length || !audioRef.current) return
 
-      audio.src = playlist[currentTrack].audioUrl
-      // Don't call load() immediately to save bandwidth unless playing
-      if (wasPlaying) {
-        audio.load()
-        audio.play().then(() => {
-          setIsPlaying(true)
-        }).catch(() => {
-          setIsPlaying(false)
-        })
-      }
-      setProgress(0)
-      setCurrentTime(0)
-      setTrackDuration("0:00")
+    const audio = audioRef.current
+    const wasPlaying = isPlaying
+
+    audio.src = playlist[currentTrack].audioUrl
+    // Don't call load() immediately to save bandwidth unless playing
+    if (wasPlaying) {
+      audio.load()
+      audio.play().then(() => {
+        setIsPlaying(true)
+      }).catch(() => {
+        setIsPlaying(false)
+      })
     }
-  }, [currentTrack])
+    setProgress(0)
+    setCurrentTime(0)
+    setTrackDuration("0:00")
+  }, [currentTrack, playlist, isPlaying])
 
   const togglePlay = useCallback(async () => {
     if (audioRef.current) {
@@ -159,6 +175,44 @@ useEffect(() => {
     }
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-8">
+        <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
+          <AlertCircle className="h-6 w-6 text-red-400" />
+        </div>
+        <div className="text-center">
+          <p className="text-white/90 text-sm font-medium mb-1">Không thể tải danh sách nhạc</p>
+          <p className="text-white/50 text-xs">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 px-4 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-medium hover:bg-cyan-500/30 transition-gpu"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-8">
+        <Loader2 className="h-8 w-8 text-cyan-400 animate-spin" />
+        <p className="text-white/60 text-sm font-medium">Đang tải danh sách nhạc...</p>
+      </div>
+    )
+  }
+
+  if (!playlist.length) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-8">
+        <AlertCircle className="h-8 w-8 text-orange-400" />
+        <p className="text-white/60 text-sm font-medium">Không có bài hát nào trong danh sách</p>
+      </div>
+    )
+  }
+
   return (
     <div className={`media-player-root flex flex-col gap-3 ${isPlaying ? 'playing' : ''}`}>
       <div className="shrink-0 space-y-3">
@@ -167,8 +221,8 @@ useEffect(() => {
             <div className="absolute inset-0 rounded-full overflow-hidden border border-white/20 shadow-xl shadow-black/40">
               <div className={`absolute inset-0 rounded-full overflow-hidden gpu-smooth ${isPlaying ? 'animate-spin-slow' : ''}`}>
                 <Image
-                  src={playlist[currentTrack].cover}
-                  alt={playlist[currentTrack].title}
+                  src={playlist[currentTrack]?.cover || '/default-album.png'}
+                  alt={playlist[currentTrack]?.title || 'Album'}
                   fill
                   className="object-cover rounded-full"
                   sizes="80px"
@@ -193,10 +247,10 @@ useEffect(() => {
             )}
           </div>
 
-          <div className="flex-1 min-w-0 flex flex-col gap-2">
+            <div className="flex-1 min-w-0 flex flex-col gap-2">
             <div className="space-y-1">
-              <h3 className="text-white font-bold text-lg truncate drop-shadow-lg">{playlist[currentTrack].title}</h3>
-              <p className="text-white/70 text-sm truncate font-medium">{playlist[currentTrack].artist}</p>
+              <h3 className="text-white font-bold text-lg truncate drop-shadow-lg">{playlist[currentTrack]?.title || 'Loading...'}</h3>
+              <p className="text-white/70 text-sm truncate font-medium">{playlist[currentTrack]?.artist || ''}</p>
             </div>
             <div className="flex items-center gap-2.5 mt-1">
               <div className={`w-2.5 h-2.5 rounded-full ${isPlaying ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 animate-pulse' : 'bg-white/50'}`} />
