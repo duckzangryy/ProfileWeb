@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Vuong Viet Anh - Personal Portfolio",
     description: "~/mot chut ve toi - Vuong Viet Anh",
-    url: "https://your-domain.com",
+    url: "https://hori.is-a.dev/",
     siteName: "Vuong Viet Anh Portfolio",
     images: [
       {
@@ -90,7 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
 
-        <AntiDdosShield />
+        {/* <AntiDdosShield /> */}
         <AntiInspect />
         {children}
         <Analytics />
