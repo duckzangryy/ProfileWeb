@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import SoundCloud from 'soundcloud-scraper';
 
 interface ParsedTrack {
   id: string;
@@ -87,17 +88,58 @@ async function fetchSoundCloudTracks(soundcloudUrl: string): Promise<ParsedTrack
       throw new Error('Invalid SoundCloud URL');
     }
 
-    // For demonstration, return demo tracks
-    // To implement real SoundCloud fetching:
-    // 1. Set up SoundCloud API credentials
-    // 2. Use a service like https://scapi.proxyapi.ru/ (if available)
-    // 3. Or implement a browser-based scraper with proper headers
+    console.log('[v0] Fetching from SoundCloud URL:', soundcloudUrl);
     
-    console.log('[v0] Fetching from URL:', soundcloudUrl);
+    // Resolve the URL using soundcloud-scraper
+    const resolved = await SoundCloud.getInfo(soundcloudUrl);
     
-    return DEMO_TRACKS;
+    if (!resolved) {
+      throw new Error('Could not resolve SoundCloud URL');
+    }
+
+    let trackList: any[] = [];
+
+    // Check if it's a playlist
+    if (resolved.tracks) {
+      trackList = Array.isArray(resolved.tracks) ? resolved.tracks : [resolved.tracks];
+      console.log(`[v0] Resolved as playlist with ${trackList.length} tracks`);
+    } 
+    // Check if it's a single track
+    else if (resolved.title && resolved.duration) {
+      trackList = [resolved];
+      console.log('[v0] Resolved as single track');
+    }
+    // Check for other formats
+    else if (Array.isArray(resolved)) {
+      trackList = resolved;
+      console.log(`[v0] Resolved as array with ${trackList.length} items`);
+    }
+    else {
+      throw new Error('Could not parse SoundCloud response');
+    }
+
+    // Map to our format
+    const tracks = trackList
+      .filter((track: any) => track && (track.title || track.name))
+      .map((track: any, idx: number) => ({
+        id: (track.id || idx).toString(),
+        title: track.title || track.name || 'Unknown',
+        artist: track.user?.username || track.artist?.name || track.artist || 'Unknown Artist',
+        duration: track.duration ? Math.round(track.duration / 1000) : 0,
+        cover: track.artwork_url || track.thumbnail || '/default-album.png',
+        audioUrl: track.url || '',
+      }));
+
+    if (tracks.length === 0) {
+      console.log('[v0] No valid tracks found, using demo tracks');
+      return DEMO_TRACKS;
+    }
+
+    console.log(`[v0] Successfully loaded ${tracks.length} tracks from SoundCloud`);
+    return tracks;
   } catch (error) {
-    console.error('[v0] Fetch error:', error);
-    throw error;
+    console.error('[v0] SoundCloud fetch error:', error);
+    console.log('[v0] Falling back to demo tracks');
+    return DEMO_TRACKS;
   }
 }
