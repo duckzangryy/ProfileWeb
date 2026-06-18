@@ -84,11 +84,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Chạy synchronous → set data-shield trước khi browser paint bất cứ thứ gì.
           CSS visibility:hidden ẩn toàn bộ content phía sau.
         */}
-          <script
+          {/* <script
             dangerouslySetInnerHTML={{
               __html: `(function(){try{var val=localStorage.getItem('pw_shield_ok');if(!val||Date.now()-Number(val)>30*60*1000)document.body.setAttribute('data-shield','pending')}catch(e){document.body.setAttribute('data-shield','pending')}})();`,
             }}
-          />
+          /> */}
 
         {/* <AntiDdosShield /> */}
         <AntiInspect />
