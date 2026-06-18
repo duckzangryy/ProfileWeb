@@ -293,22 +293,42 @@ useEffect(() => {
           </button>
         </div>
 
-      <div className="playlist-wrap pt-3 border-t border-white/10">
-          <div className="playlist-list space-y-2 overscroll-y-contain">
-            {playlist.map((track, index) => (
-              <button key={index} onClick={() => setCurrentTrack(index)} className={`w-full min-h-[3.25rem] flex items-center justify-between p-3 rounded-lg transition-gpu border ${index === currentTrack ? 'bg-gradient-to-r from-cyan-500/15 to-blue-500/15 text-cyan-300 border-cyan-500/30' : 'bg-white/5 text-white/60 border-white/10'}`}>
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${index === currentTrack ? 'bg-cyan-500/30 text-cyan-300' : 'bg-white/10 text-white/50'}`}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className={`text-sm font-medium truncate ${index === currentTrack ? 'text-cyan-300' : 'text-white/80'}`}>{track.title}</div>
-                    <div className="text-xs text-white/50 truncate">{track.artist}</div>
-                  </div>
+      <div className="playlist-wrap pt-4 border-t border-white/10">
+        <div className="mb-3">
+          <h4 className="text-sm font-semibold text-white/80 px-1">Danh sách ({playlist.length} bài)</h4>
+        </div>
+        <div className="playlist-list max-h-96 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+          {playlist.map((track, index) => (
+            <button 
+              key={index} 
+              onClick={() => setCurrentTrack(index)} 
+              className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 border ${
+                index === currentTrack 
+                  ? 'bg-gradient-to-r from-cyan-500/25 to-blue-500/25 text-cyan-300 border-cyan-500/50 shadow-lg shadow-cyan-500/20' 
+                  : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                index === currentTrack 
+                  ? 'bg-cyan-500/40 text-cyan-200' 
+                  : 'bg-white/10 text-white/50'
+              }`}>
+                {index + 1}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div className={`text-sm font-medium truncate ${index === currentTrack ? 'text-cyan-200' : 'text-white/80'}`}>
+                  {track.title}
                 </div>
-              </button>
-            ))}
-          </div>
+                <div className="text-xs text-white/50 truncate">{track.artist}</div>
+              </div>
+              {track.duration && (
+                <div className="text-xs text-white/40 flex-shrink-0">
+                  {formatTime(track.duration)}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

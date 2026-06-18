@@ -615,6 +615,24 @@ body[data-shield="pending"] > *:not([data-shield-overlay]) {
   -ms-overflow-style: none;
 }
 
+/* Custom scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
   /* Desktop layout */
   @media (min-width: 1024px) {
     .page-grid,
