@@ -1,4 +1,4 @@
-# ProfileWeb
+# profile-web
 
 Next.js personal profile site for **Vương Việt Anh** — glass UI, snow, media player, visitor panel, and light anti-abuse guards.
 
@@ -25,7 +25,7 @@ Built with the App Router and a Radix / shadcn-style component set.
 ## Quick start
 
 ```bash
-git clone https://github.com/duckzangryy/ProfileWeb.git
+git clone https://github.com/duckzangryy/profile-web.git
 cd ProfileWeb
 npm install
 npm run dev
@@ -79,4 +79,4 @@ npm run build && npm start
 
 ## Author
 
-[duckzangryy](https://github.com/duckzangryy) · related: [Portfolio-1](https://github.com/duckzangryy/Portfolio-1)
+[duckzangryy](https://github.com/duckzangryy) · related: [Portfolio-1](https://github.com/duckzangryy/personal-portfolio)
